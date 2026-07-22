@@ -1,5 +1,10 @@
 #pragma once
 #include <string>
+#include <iostream>
+#include <tuple>
+#include <Student.h>
+#include <Course.h>
+#include <Edge.h>
 
 using namespace std;
 

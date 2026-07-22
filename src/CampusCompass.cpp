@@ -1,7 +1,5 @@
 #include "CampusCompass.h"
 
-#include <string>
-
 using namespace std;
 
 CampusCompass::CampusCompass() {
@@ -14,11 +12,21 @@ bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes
 }
 
 bool CampusCompass::ParseCommand(const string &command) {
+
+    string commands;
+    getline(cin, commands);
+    int numLines = stoi(command);
+    for(int i = 0; i < numLines; i++){
+        // Parse commands
+    }
+
     // do whatever regex you need to parse validity
     // hint: return a boolean for validation when testing. For example:
     bool is_valid = true; // replace with your actual validity checking
 
 /*
+    ONLY LOCATION DATA NEEDS TO BE REPRESENTED AS A GRAPH
+
     Valid commands:
     ###=== Note Sections (***Note) <- may be good test cases to implement for incorrect input and or functionality testing. ===###
        === Students are limited to 6 classes and must be removed from the structure if they have 0 classes enrolled. ===
