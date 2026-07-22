@@ -21,6 +21,9 @@ bool CampusCompass::ParseCommand(const string &command) {
 /*
     Valid commands:
     ###=== Note Sections (***Note) <- may be good test cases to implement for incorrect input and or functionality testing. ===###
+       === Students are limited to 6 classes and must be removed from the structure if they have 0 classes enrolled. ===
+       === Any commands not meeting the requirements for formatting must be ignored and "unsuccessful" printed ===
+       === The first line of input will denote how many inputs are to follow see https://ufl.instructure.com/courses/570816/assignments/7096026 for examples === 
 
         #insert STUDENT_NAME STUDENT_ID RESIDENCE_LOCATION_ID N CLASSCODE_1 CLASSCODE_2 ... CLASSCODE_N
             STUDENT_NAME is [a-z, A-Z, /s] wrapped in quotes. I.E. "John Smith".
