@@ -5,9 +5,13 @@
 
 using namespace std;
 
-CampusCompass::CampusCompass() {
-    // initialize your object
-}
+CampusCompass::CampusCompass()
+    {
+        adjacencyList = {};
+        edgeList = {};
+        students = {};
+        catalog = {};
+    };
 
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath) {
     // return boolean based on whether parsing was successful or not
@@ -26,6 +30,58 @@ bool CampusCompass::ParseCommand(const string &command) {
     // do whatever regex you need to parse validity
     // hint: return a boolean for validation when testing. For example:
     bool is_valid = true; // replace with your actual validity checking
+    return is_valid;
+}
+
+//Getters
+vector<vector<pair<int, Edge>>> CampusCompass::GetAdjacencyList(){return adjacencyList;}
+vector<pair<int, Edge>> CampusCompass::GetEdgeList(){return edgeList;}
+vector<Student> CampusCompass::GetStudents(){return students;}
+vector<Course> CampusCompass::GetCatalog(){return catalog;}
+
+//Modifiers
+bool CampusCompass::addNewStudent(string studentName, int studentID, int residenceID, vector<string> courseCodes)
+{
+    for(auto it = students.begin(); it != students.end();){if(it->GetUFID() == studentID){return false;}}
+    students.push_back(Student(studentName, studentID, residenceID, courseCodes));
+    for(auto i : catalog){for(auto j : courseCodes){if(i.GetClassCode() == j){i.addToRoster(studentID);}}}
+    return true;
+}
+bool CampusCompass::removeStudent(int studentID)
+{
+    for(auto it = students.begin(); it != students.end();)
+    {
+        if(it->GetUFID() == studentID)
+        {
+            vector<string> courses = it->GetCourseSchedule();
+            students.erase(it);
+            for(auto i : catalog){for(auto j : courses){if(i.GetClassCode() == j){i.removeFromRoster(studentID);}}}
+            return true;
+        }
+        else{it++;}
+    }
+    return false;
+}
+bool CampusCompass::dropStudent(int studentID, string courseCode)
+{}
+bool CampusCompass::swapStudent(int studentID, string courseCodeA, string courseCodeB)
+{}
+bool CampusCompass::removeFromCatalog(string courseCode)
+{}
+bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
+{}
+
+//Reporting
+bool CampusCompass::checkEdge(pair<int, int> LocationIDs)
+{}
+bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
+{}
+vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
+{}
+int CampusCompass::dispalyStudentZone(int studentID)
+{}
+int CampusCompass::verifySchedule(int studentID)
+{}
 
 /*
     ONLY LOCATION DATA NEEDS TO BE REPRESENTED AS A GRAPH
@@ -119,6 +175,4 @@ bool CampusCompass::ParseCommand(const string &command) {
             ***Note: if a student has only one class print "unsuccessful"
 */
 
-    return is_valid;
-}
 

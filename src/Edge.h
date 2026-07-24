@@ -13,21 +13,15 @@ private:
 
 public:
 //Getters
-    int GetLocID1(){return LocID1;}
-    int GetLocID2(){return LocID2;}
-    int GetWeight(){return weight;}
-    bool GetOpenStatus(){return openStatus;}
+    int GetLocID1();
+    int GetLocID2();
+    int GetWeight();
+    bool GetOpenStatus();
 
 //Methods
-    void toggleOpenStatus(){openStatus = !openStatus;}
+    void toggleOpenStatus();
 
 //Constructors
-    Edge(int to, int from, int distance)
-    {
-        LocID1 = to;
-        LocID2 = from;
-        weight = distance;
-        openStatus = true; 
-    }
+    Edge(int to, int from, int distance);
 
 };
