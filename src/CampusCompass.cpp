@@ -47,6 +47,7 @@ bool CampusCompass::addNewStudent(string studentName, int studentID, int residen
     for(auto i : catalog){for(auto j : courseCodes){if(i.GetClassCode() == j){i.addToRoster(studentID);}}}
     return true;
 }
+
 bool CampusCompass::removeStudent(int studentID)
 {
     for(auto it = students.begin(); it != students.end();)
@@ -62,12 +63,68 @@ bool CampusCompass::removeStudent(int studentID)
     }
     return false;
 }
+
 bool CampusCompass::dropStudent(int studentID, string courseCode)
-{}
+{
+    bool success = false;
+    for(auto it = students.begin(); it != students.end();)
+    {
+        if(it->GetUFID() == studentID)
+        {success = it->removeCourse(courseCode);}
+        if(!success){return success;}
+    }
+    for(auto it = catalog.begin(); it != catalog.end();)
+    {
+        if(it->GetClassCode() == courseCode)
+        {success = it->removeFromRoster(studentID);}
+        if(!success){return success;}
+    }
+    return success;
+}
+
 bool CampusCompass::swapStudent(int studentID, string courseCodeA, string courseCodeB)
-{}
+{
+    bool success = false;
+    success = dropStudent(studentID, courseCodeA);
+    for(auto it = students.begin(); it != students.end();)
+    {
+        if(it->GetUFID() == studentID)
+        {success = it->addCourse(courseCodeB);}
+        if(!success){return success;}
+    }
+    for(auto it = catalog.begin(); it != catalog.end();)
+    {
+        if(it->GetClassCode() == courseCodeB)
+        {success = it->addToRoster(studentID);}
+        if(!success){return success;}
+    }
+    return success;
+}
+
 bool CampusCompass::removeFromCatalog(string courseCode)
-{}
+{
+    bool success = false;
+    for(auto i : catalog)
+    {
+        if(i.GetClassCode() == courseCode)
+        {
+            vector<int> enrolled = i.GetRoster();
+            for(auto j : enrolled)
+            {
+                success = i.removeFromRoster(j);
+                for(auto k : students)
+                {
+                    if(k.GetUFID() == j)
+                    {
+                        success = k.removeCourse(courseCode);
+                    }
+                }
+            }
+        }
+    }
+    return success;
+}
+
 bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
 {}
 
