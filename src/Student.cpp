@@ -20,12 +20,13 @@ using namespace std;
 //Methods
     bool Student::addCourse(string courseCode)
     {
-        for(auto it = courseSchedule.begin(); it != courseSchedule.end(); it++)
+        for(auto it = courseSchedule.begin(); it != courseSchedule.end();)
         {
             if(*it == courseCode)
             {
                 return false;
             }
+            else{it++;}
         }
         courseSchedule.push_back(courseCode);
         return true;
@@ -33,13 +34,14 @@ using namespace std;
 
     bool Student::removeCourse(string courseCode)
     {
-        for(auto it = courseSchedule.begin(); it != courseSchedule.end(); it++)
+        for(auto it = courseSchedule.begin(); it != courseSchedule.end();)
         {
             if(*it == courseCode)
             {
                 courseSchedule.erase(it);
                 return true;
             }
+            else{it++;}
         }
         return false;
     }

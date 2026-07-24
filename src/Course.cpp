@@ -17,13 +17,14 @@ using namespace std;
 //Methods
     bool Course::removeFromRoster(int studentID)
     {
-        for(auto it = roster.begin(); it != roster.end(); it++)
+        for(auto it = roster.begin(); it != roster.end();)
         {
             if(*it == studentID)
             {
                 roster.erase(it);
                 return true;
             }
+            else{it++;}
         }
         return false;
     }

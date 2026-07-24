@@ -42,7 +42,7 @@ vector<Course> CampusCompass::GetCatalog(){return catalog;}
 //Modifiers
 bool CampusCompass::addNewStudent(string studentName, int studentID, int residenceID, vector<string> courseCodes)
 {
-    for(auto it = students.begin(); it != students.end();){if(it->GetUFID() == studentID){return false;}}
+    for(auto it = students.begin(); it != students.end();it++){if(it->GetUFID() == studentID){return false;}}
     students.push_back(Student(studentName, studentID, residenceID, courseCodes));
     for(auto i : catalog){for(auto j : courseCodes){if(i.GetClassCode() == j){i.addToRoster(studentID);}}}
     return true;
@@ -67,13 +67,13 @@ bool CampusCompass::removeStudent(int studentID)
 bool CampusCompass::dropStudent(int studentID, string courseCode)
 {
     bool success = false;
-    for(auto it = students.begin(); it != students.end();)
+    for(auto it = students.begin(); it != students.end();it++)
     {
         if(it->GetUFID() == studentID)
         {success = it->removeCourse(courseCode);}
         if(!success){return success;}
     }
-    for(auto it = catalog.begin(); it != catalog.end();)
+    for(auto it = catalog.begin(); it != catalog.end();it++)
     {
         if(it->GetClassCode() == courseCode)
         {success = it->removeFromRoster(studentID);}
@@ -86,13 +86,13 @@ bool CampusCompass::swapStudent(int studentID, string courseCodeA, string course
 {
     bool success = false;
     success = dropStudent(studentID, courseCodeA);
-    for(auto it = students.begin(); it != students.end();)
+    for(auto it = students.begin(); it != students.end();it++)
     {
         if(it->GetUFID() == studentID)
         {success = it->addCourse(courseCodeB);}
         if(!success){return success;}
     }
-    for(auto it = catalog.begin(); it != catalog.end();)
+    for(auto it = catalog.begin(); it != catalog.end();it++)
     {
         if(it->GetClassCode() == courseCodeB)
         {success = it->addToRoster(studentID);}
@@ -104,14 +104,14 @@ bool CampusCompass::swapStudent(int studentID, string courseCodeA, string course
 bool CampusCompass::removeFromCatalog(string courseCode)
 {
     bool success = false;
-    for(auto i : catalog)
+    for(auto it = catalog.begin(); it != catalog.end();)
     {
-        if(i.GetClassCode() == courseCode)
+        if(it->GetClassCode() == courseCode)
         {
-            vector<int> enrolled = i.GetRoster();
+            vector<int> enrolled = it->GetRoster();
             for(auto j : enrolled)
             {
-                success = i.removeFromRoster(j);
+                success = it->removeFromRoster(j);
                 for(auto k : students)
                 {
                     if(k.GetUFID() == j)
@@ -120,14 +120,16 @@ bool CampusCompass::removeFromCatalog(string courseCode)
                     }
                 }
             }
+            catalog.erase(it);
+            return success;
         }
+        else{it++;}
     }
     return success;
 }
 
 bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
 {}
-
 //Reporting
 bool CampusCompass::checkEdge(pair<int, int> LocationIDs)
 {}
