@@ -1,4 +1,7 @@
 #include "CampusCompass.h"
+#include "Edge.h"
+#include "Course.h"
+#include "Student.h"
 
 using namespace std;
 

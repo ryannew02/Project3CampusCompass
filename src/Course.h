@@ -12,20 +12,28 @@ private:
     int LocID;
     int startTime;
     int endTime;
-    vector<Student> roster;
+    vector<int> roster;
 
 public:
+//Constructor
+    Course(string Code, int Loc, int start, int end)
+    {
+        classCode = Code;
+        LocID = Loc;
+        startTime = start;
+        endTime = end;
+    }
 //Getters
     string GetClassCode(){return classCode;}
     int GetLocID(){return LocID;}
     int GetTimeBuffer(Course& rhs){return (rhs.startTime - this->endTime);}
-    vector<Student> GetRoster(){return roster;}
+    vector<int> GetRoster(){return roster;}
 //Methods
     bool removeFromRoster(int studentID)
     {
         for(auto it = roster.begin(); it != roster.end(); it++)
         {
-            if(it->GetUFID() == studentID)
+            if(*it == studentID)
             {
                 roster.erase(it);
                 return true;
@@ -34,5 +42,30 @@ public:
         return false;
     }
 
+    bool addToRoster(int studentID)
+    {
+        for(auto it = roster.begin(); it != roster.end(); it++)
+        {
+            if(*it == studentID)
+            {
+                return false;
+            }
+        }
+        roster.push_back(studentID);
+        return true;
+    }
 
+    bool swapCourse(int studentID, Course& other)
+    {
+        if(!removeFromRoster(studentID)){return false;};
+        if(!other.addToRoster(studentID)){return false;};
+        return true;
+    }
+
+    bool closeCourse()
+    {
+        if(roster.size() < 1){return false;}
+        roster.clear();
+        return true;
+    }
 };
