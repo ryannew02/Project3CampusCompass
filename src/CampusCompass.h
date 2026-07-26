@@ -9,9 +9,9 @@
 #include <stack>
 #include <queue>
 #include <regex>
-#include <Student.h>
-#include <Course.h>
-#include <Edge.h>
+#include "Student.h"
+#include "Course.h"
+#include "Edge.h"
 
 using namespace std;
 
