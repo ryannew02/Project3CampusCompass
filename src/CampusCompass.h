@@ -58,7 +58,7 @@ public:
     bool validateUFID(string UFID);
     bool validateResidenceID(string residenceID);
     vector<string> splitCommand(string line);
-    
+    map<int, int> findDijkstraTable(int source);
 
 
 };

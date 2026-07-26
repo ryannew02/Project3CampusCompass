@@ -182,8 +182,16 @@ bool CampusCompass::ParseCommand(const string &command) {
 
         case 8:
 //#printShortestEdges STUDENT_ID ;
+        {
+            if(commandParams.size() != 2 || !validateUFID(commandParams[1]) || students.count(stoi(commandParams[1])) == 0){cout << "unsuccessful" << endl; return false;}
+            int UFID = stoi(commandParams[1]);
+            cout << "Time For Shortest Edges: " << students[UFID].GetName() << endl;
+            for(auto& route : displayAvailableRoutes(UFID)){
+                cout << route.first << ": " << route.second << endl;
+            }
             return true;
-            
+        }
+
         case 9:
 //#printStudentZone STUDENT_ID ;
             return true;
@@ -295,7 +303,23 @@ bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
 }
 
 vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
-{return {};}
+{
+    vector<pair<string, int>> results;
+    if(students.count(studentID) == 0){return results;}
+
+    Student& student = students[studentID];
+    map<int, int> distances = findDijkstraTable(student.GetResidenceID());
+
+    for(auto& courseCode : student.GetCourseSchedule())
+    {
+        if(catalog.count(courseCode) == 0){continue;}
+        int loc = catalog[courseCode].GetLocID();
+        int dist = distances.count(loc) ? distances[loc] : -1;
+        results.push_back({courseCode, dist});
+    }
+    sort(results.begin(), results.end()); 
+    return results;
+}
 int CampusCompass::dispalyStudentZone(int studentID)
 {return 0;}
 int CampusCompass::verifySchedule(int studentID)
@@ -349,6 +373,33 @@ vector<string> CampusCompass::splitCommand(string line) {
     }
     return tokens;
 }
+
+map<int, int> CampusCompass::findDijkstraTable(int source)
+{
+    map<int, int> distances;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> prioQuene;
+    distances[source] = 0;
+    prioQuene.push(make_pair(0, source));
+    while(!prioQuene.empty())
+    {
+        int x = prioQuene.top().first;
+        int y = prioQuene.top().second;
+        prioQuene.pop();
+        if(x > distances[y]){continue;}
+        for(int edgeID : adjacencyList[y])
+        {
+            if(!edgeList[edgeID].GetOpenStatus()){continue;}
+            int z = edgeList[edgeID].GetToLoc(y);
+            int newDist = x + edgeList[edgeID].GetWeight();
+            if(distances.count(z) == 0 || newDist < distances[z])
+            {
+                distances[z] = newDist;
+                prioQuene.push({newDist, z});
+            }
+        }
+    }
+}
+
 /*
     ONLY LOCATION DATA NEEDS TO BE REPRESENTED AS A GRAPH
 
