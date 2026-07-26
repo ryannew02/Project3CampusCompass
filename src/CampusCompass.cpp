@@ -154,16 +154,32 @@ bool CampusCompass::ParseCommand(const string &command) {
 
         case 5:
 //#toggleEdgesClosure N LOCATION_ID_A LOCATION_ID_B ... LOCATION_ID_X LOCATION_ID_Y
-            return true;
+        {
+            if(commandParams.size() < 4 || (commandParams.size() % 2 != 0)){cout << "unsuccessful" << endl; return false;}
+            int paramNum = commandParams.size();
+            if(stoi(commandParams[1]) != (paramNum - 2)/2){cout << "unsuccessful" << endl; return false;}
+            vector<pair<int, int>> edges;
+            //check each location exists
+            for( int i = 2; i < paramNum; i++){if(!validateResidenceID(commandParams[i])){cout << "unsuccessful" << endl; return false;}}
+            //add to vector
+            for( int i = 2; i < paramNum; i += 2){edges.push_back(make_pair(stoi(commandParams[i]), stoi(commandParams[i+1])));}
+            return closeEdges(edges);
+        }
             
         case 6:
 //#checkEdgeStatus LOCATION_ID_A LOCATION_ID_B ; 
-            return true;
+        {
+            if(commandParams.size() != 3){cout << "unsuccessful" << endl; return false;}
+            return checkEdge(make_pair(stoi(commandParams[1]), stoi(commandParams[2])));
+        }            
             
         case 7:
 //#isConnected LOCATION_ID_A LOCATION_ID_B ;
-            return true;
-            
+        {
+            if(commandParams.size() != 3){cout << "unsuccessful" << endl; return false;}
+            return checkRoute(make_pair(stoi(commandParams[1]), stoi(commandParams[2])));
+        }   
+        
         case 8:
 //#printShortestEdges STUDENT_ID ;
             return true;
@@ -219,12 +235,64 @@ bool CampusCompass::swapStudent(int studentID, string courseCodeA, string course
 }
 
 bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
-{return true;}
+{
+    for(auto edge : LocationIDs)
+    {
+        vector<int> possibleEdges = adjacencyList[edge.first];
+        vector<int> otherPossibleEdges = adjacencyList[edge.second];
+        for(auto i : possibleEdges){for(auto j : otherPossibleEdges){if(i == j){edgeList[i].toggleOpenStatus();break;}}}
+    }
+    return true;
+}
 //Reporting
 bool CampusCompass::checkEdge(pair<int, int> LocationIDs)
-{return true;}
+{
+    if(adjacencyList.count(LocationIDs.first) == 0 || adjacencyList.count(LocationIDs.second) == 0)
+    {
+        cout << "DNE" << endl;
+        return false;
+    }    
+    vector<int> possibleEdges = adjacencyList[LocationIDs.first];
+    vector<int> otherPossibleEdges = adjacencyList[LocationIDs.second];
+    for(auto i : possibleEdges){for(auto j : otherPossibleEdges){if(i == j)
+        {
+        if(edgeList[i].GetOpenStatus()){cout << "Open" << endl; return true;}
+        else{cout << "Closed" << endl; return false;}
+        }}}
+    cout << "DNE" << endl;
+    return false;
+}
+
 bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
-{return true;}
+{
+    int start = LocationIDs.first;
+    int target = LocationIDs.second;
+
+    if(adjacencyList.count(start) == 0 || adjacencyList.count(target) == 0){return false;}
+    if(start == target){return true;}
+    set<int> visited;
+    queue<int> toVisit;
+    toVisit.push(start);
+    visited.insert(start);
+    while(!toVisit.empty())
+    {
+        int current = toVisit.front();
+        toVisit.pop();
+        for(int edgeID : adjacencyList[current])
+        {
+            if(!edgeList[edgeID].GetOpenStatus()){continue;}
+            int neighbor = edgeList[edgeID].GetToLoc(current);
+            if(neighbor == target){return true;}
+            if(visited.count(neighbor) == 0)
+            {
+                visited.insert(neighbor);
+                toVisit.push(neighbor);
+            }
+        }
+    }
+    return false;
+}
+
 vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
 {return {};}
 int CampusCompass::dispalyStudentZone(int studentID)
@@ -323,7 +391,7 @@ vector<string> CampusCompass::splitCommand(string line) {
             $Desc: Removes a class from the schedule recursivly dropping all students and prints the number of students that were dropped. 
         
         #toggleEdgesClosure N LOCATION_ID_A LOCATION_ID_B ... LOCATION_ID_X LOCATION_ID_Y
-            N integer number of arguments to follow, should always be even as it is an interger number of edges with two locations for each edge.
+            2N integer number of arguments to follow, should always be even as it is an interger number of edges with two locations for each edge.
             LOCATION_ID... integer representing location ID, these will always come in pairs
             ***Note: This is a toggle so edgeClosed = !edgeClosed I.E (if open now shut...if shut now open)
             ***Note: Edges given will always be valid!!!!

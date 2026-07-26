@@ -6,6 +6,8 @@
 #include <sstream>
 #include <map>
 #include <set>
+#include <stack>
+#include <quene>
 #include <regex>
 #include <Student.h>
 #include <Course.h>
