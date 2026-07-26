@@ -58,3 +58,16 @@ using namespace std;
         courseSchedule.clear();
         return true;
     }
+
+    bool Student::isEnrolledIn(string courseCode)
+    {
+        for(auto it = courseSchedule.begin(); it != courseSchedule.end();)
+        {
+            if(*it == courseCode)
+            {
+                return true;
+            }
+            else{it++;}
+        }
+        return false;
+    }

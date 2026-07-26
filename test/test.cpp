@@ -1,43 +1,106 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
-
-// change if you choose to use a different header name
 #include "CampusCompass.h"
 
 using namespace std;
 
-// the syntax for defining a test is below. It is important for the name to be
-// unique, but you can group multiple tests with [tags]. A test can have
-// [multiple][tags] using that syntax.
-TEST_CASE("Example Test Name - Change me!", "[tag]") {
-  // instantiate any class members that you need to test here
-  int one = 1;
 
-  // anything that evaluates to false in a REQUIRE block will result in a
-  // failing test
-  REQUIRE(one == 0); // fix me!
-
-  // all REQUIRE blocks must evaluate to true for the whole test to pass
-  REQUIRE(false); // also fix me!
+static CampusCompass& ParsedBase() {
+    static CampusCompass testBase = [](){
+        CampusCompass graph;
+        if(!graph.ParseCSV("data/edges.csv", "data/classes.csv")) {
+            throw std::runtime_error("Failed to parse CSV fixture data");
+        }
+        return graph;
+    }();
+    return testBase;
 }
 
-TEST_CASE("Test 2", "[tag]") {
-  // you can also use "sections" to share setup code between tests, for example:
-  int one = 1;
+TEST_CASE("Testing Incorrect insert Commands", "[ParseCommand][insert]")
+{
+    CampusCompass testGraph = ParsedBase();
 
-  SECTION("num is 2") {
-    int num = one + 1;
-    REQUIRE(num == 2);
-  };
-
-  SECTION("num is 3") {
-    int num = one + 2;
-    REQUIRE(num == 3);
-  };
-
-  // each section runs the setup code independently to ensure that they don't
-  // affect each other
+    SECTION("invalid name (contains digits)") {
+        REQUIRE_FALSE(testGraph.ParseCommand("insert \"A11y\" 45679999 1 1 COP3530"));
+    }
+    SECTION("invalid UFID (7 digits, not 8)") {
+        REQUIRE_FALSE(testGraph.ParseCommand("insert \"Alex\" 4567999 1 1 COP3530"));
+    }
+    SECTION("invalid residence ID (not a valid location)") {
+        REQUIRE_FALSE(testGraph.ParseCommand("insert \"Alex\" 45679999 999999 1 COP3530"));
+    }
+    SECTION("N doesn't match number of class codes given") {
+        REQUIRE_FALSE(testGraph.ParseCommand("insert \"Alex\" 45679999 1 2 COP3530"));
+    }
+    SECTION("nonexistent course") {
+        REQUIRE_FALSE(testGraph.ParseCommand("insert \"Alex\" 45679999 1 1 FAKE9999"));
+    }
+    SECTION("unrecognized command") {
+        REQUIRE_FALSE(testGraph.ParseCommand("inser \"Alex\" 45679999 1 1 COP3530"));
+    }
 }
+
+TEST_CASE("Testing Incorrect remove Commands", "[ParseCommand][remove]")
+{
+    CampusCompass testGraph = ParsedBase();
+
+    SECTION("student doesn't exist") {
+        REQUIRE_FALSE(testGraph.ParseCommand("remove 45679999"));
+    }
+    SECTION("invalid UFID (7 digits)") {
+        REQUIRE_FALSE(testGraph.ParseCommand("remove 4567999"));
+    }
+}
+
+TEST_CASE("Testing Incorrect dropClass Commands", "[ParseCommand][dropClass]")
+{
+    CampusCompass testGraph = ParsedBase();
+    REQUIRE(testGraph.ParseCommand("insert \"Alex\" 45679999 1 1 COP3530"));
+
+    SECTION("student not enrolled in that class") {
+        REQUIRE_FALSE(testGraph.ParseCommand("dropClass 45679999 CDA3101"));
+    }
+    SECTION("student doesn't exist") {
+        REQUIRE_FALSE(testGraph.ParseCommand("dropClass 11111111 COP3530"));
+    }
+    SECTION("dropping correctly") {
+      REQUIRE(testGraph.ParseCommand("dropClass 45679999 COP3530"));
+    }
+}
+
+TEST_CASE("Testing Incorrect replaceClass Commands", "[ParseCommand][replaceClass]")
+{
+    CampusCompass testGraph = ParsedBase();
+    REQUIRE(testGraph.ParseCommand("insert \"Alex\" 45679999 1 2 COP3530 MAC2311"));
+
+    SECTION("not enrolled in CLASSCODE_A") {
+        REQUIRE_FALSE(testGraph.ParseCommand("replaceClass 45679999 CDA3101 EEL3701"));
+    }
+    SECTION("already enrolled in CLASSCODE_B") {
+        REQUIRE_FALSE(testGraph.ParseCommand("replaceClass 45679999 COP3530 MAC2311"));
+    }
+    SECTION("correct functionality") {
+        REQUIRE(testGraph.ParseCommand("replaceClass 45679999 COP3530 EEL3701"));
+    }
+}
+
+TEST_CASE("Testing Incorrect removeClass Commands", "[ParseCommand][removeClass]")
+{
+    CampusCompass testGraph = ParsedBase();
+
+    SECTION("class code doesn't exist") {
+        REQUIRE_FALSE(testGraph.ParseCommand("removeClass FAKE9999"));
+    }
+    SECTION("class exists but has 0 students enrolled") {
+        REQUIRE_FALSE(testGraph.ParseCommand("removeClass COP3530"));
+    }
+}
+
+//==========Need to add more ParseCommand incorrect commands====================
+
+//==========Need to add tersting for printShortestEdges command in a case where a student can reach a class, then one or more edges turn off, and then they cannot reach that class. (Hint: the visualizer tool can help with this a lot). [2 points] ==============
+
+
 
 // Refer to Canvas for a list of required tests. 
 // We encourage you to write more than required to ensure proper functionality, but only the ones on Canvas will be graded.
@@ -48,37 +111,37 @@ TEST_CASE("Test 2", "[tag]") {
 
 // This uses C++ "raw strings" and assumes your CampusCompass outputs a string with
 //   the same thing you print.
-TEST_CASE("Example CampusCompass Output Test", "[flag]") {
-  // the following is a "raw string" - you can write the exact input (without
-  //   any indentation!) and it should work as expected
-  // this is based on the input and output of the first public test case
-  string input = R"(6
-insert "Student A" 10000001 1 1 COP3502
-insert "Student B" 10000002 1 1 COP3502
-insert "Student C" 10000003 1 2 COP3502 MAC2311
-dropClass 10000001 COP3502
-remove 10000001
-removeClass COP3502
-)";
+// TEST_CASE("Example CampusCompass Output Test", "[flag]") {
+//   // the following is a "raw string" - you can write the exact input (without
+//   //   any indentation!) and it should work as expected
+//   // this is based on the input and output of the first public test case
+//   string input = R"(6
+// insert "Student A" 10000001 1 1 COP3502
+// insert "Student B" 10000002 1 1 COP3502
+// insert "Student C" 10000003 1 2 COP3502 MAC2311
+// dropClass 10000001 COP3502
+// remove 10000001
+// removeClass COP3502
+// )";
 
-  string expectedOutput = R"(successful
-successful
-successful
-successful
-unsuccessful
-2
-)";
+//   string expectedOutput = R"(successful
+// successful
+// successful
+// successful
+// unsuccessful
+// 2
+// )";
 
-  string actualOutput;
+//   string actualOutput;
 
-  // somehow pass your input into your CampusCompass and parse it to call the
-  // correct functions, for example:
-  /*
-  CampusCompass c;
-  c.parseInput(input)
-  // this would be some function that sends the output from your class into a string for use in testing
-  actualOutput = c.getStringRepresentation()
-  */
+//   // somehow pass your input into your CampusCompass and parse it to call the
+//   // correct functions, for example:
+//   /*
+//   CampusCompass c;
+//   c.parseInput(input)
+//   // this would be some function that sends the output from your class into a string for use in testing
+//   actualOutput = c.getStringRepresentation()
+//   */
 
-  REQUIRE(actualOutput == expectedOutput);
-}
+//   REQUIRE(actualOutput == expectedOutput);
+// }

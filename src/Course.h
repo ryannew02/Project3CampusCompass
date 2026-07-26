@@ -16,6 +16,7 @@ private:
 
 public:
 //Constructor
+    Course() : classCode(""), LocID(-1), startTime(-1), endTime(-1) {}
     Course(string Code, int Loc, int start, int end);
 //Getters
     string GetClassCode();
@@ -27,4 +28,5 @@ public:
     bool addToRoster(int studentID);
     bool swapCourse(int studentID, Course& other);
     bool closeCourse();
+    bool isEnrolledIn(int studentID);
 };

@@ -2,7 +2,11 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include <tuple>
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <set>
+#include <regex>
 #include <Student.h>
 #include <Course.h>
 #include <Edge.h>
@@ -11,11 +15,12 @@ using namespace std;
 
 class CampusCompass {
 private:
-    vector<vector<pair<int, Edge>>> adjacencyList;
-    vector<pair<int, Edge>> edgeList;
-    vector<Student> students;
-    vector<Course> catalog;
-
+    map<int, vector<int>> adjacencyList;
+    vector<Edge> edgeList;
+    map<int, Student> students;
+    map<string, Course> catalog;
+    set<int> validResidences;
+    map<string, int> commandsPossible;
     // Think about what member variables you need to initialize
     // perhaps some graph representation?
 
@@ -28,17 +33,15 @@ public:
     bool ParseCommand(const string &command);
 
     //Getters
-    vector<vector<pair<int, Edge>>> GetAdjacencyList();
-    vector<pair<int, Edge>> GetEdgeList();
-    vector<Student> GetStudents();
-    vector<Course> GetCatalog();
+    map<int, vector<int>> GetAdjacencyList();
+    vector<Edge> GetEdgeList();
+    map<int, Student> GetStudents();
+    map<string, Course> GetCatalog();
 
     //Modifiers
-    bool addNewStudent(string studentName, int studentID, int residenceID, vector<string> courseCodes);
     bool removeStudent(int studentID);
     bool dropStudent(int studentID, string courseCode);
     bool swapStudent(int studentID, string courseCodeA, string courseCodeB);
-    bool removeFromCatalog(string courseCode);
     bool closeEdges(vector<pair<int, int>> LocationIDs);
     
     //Reporting
@@ -49,6 +52,10 @@ public:
     int verifySchedule(int studentID);
 
     //Helper
+    bool validateName(string name);
+    bool validateUFID(string UFID);
+    bool validateResidenceID(string residenceID);
+    vector<string> splitCommand(string line);
     
 
 

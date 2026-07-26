@@ -11,137 +11,275 @@ CampusCompass::CampusCompass()
         edgeList = {};
         students = {};
         catalog = {};
+        vector<string> tempCommandsPossible = {"insert", "remove", "dropClass", "replaceClass", "removeClass",
+        "toggleEdgesClosure", "checkEdgeStatus", "isConnected", "printShortestEdges", "printStudentZone", "verifyScheudle"};
+        for(unsigned int i = 0; i < tempCommandsPossible.size(); i++){commandsPossible[tempCommandsPossible[i]] = i;}
     };
 
 bool CampusCompass::ParseCSV(const string &edges_filepath, const string &classes_filepath) {
-    // return boolean based on whether parsing was successful or not
-    return true;
-}
+    ifstream edgeFile(edges_filepath);
+    //LocationID_1,LocationID_2,Name_1,Name_2,Time
+    ifstream classFile(classes_filepath);
+    //ClassCode,LocationID,Start Time (HH:MM),End Time (HH:MM)
 
-bool CampusCompass::ParseCommand(const string &command) {
-
-    string commands;
-    getline(cin, commands);
-    int numLines = stoi(command);
-    for(int i = 0; i < numLines; i++){
-        // Parse commands
+    //Load Edges into graph
+    if(!edgeFile.is_open() || !classFile.is_open()){return false;}
+    string line;
+    getline(edgeFile, line);
+    vector<string> readData;
+    int edgeID = 0; //edge ID is assigned to both directions of the edge to ensure both directions are toggled together
+    while(getline(edgeFile, line))
+    {
+        readData.clear();
+        stringstream lineStream(line);
+        while(getline(lineStream, line, ','))
+        {readData.push_back(line);}
+        Edge tempEdge = Edge(stoi(readData[0]), stoi(readData[1]), stoi(readData[4]));
+        validResidences.insert(stoi(readData[0]));
+        validResidences.insert(stoi(readData[1]));
+        edgeList.push_back(tempEdge);
+        adjacencyList[stoi(readData[0])].push_back(edgeID);
+        adjacencyList[stoi(readData[1])].push_back(edgeID);
+        edgeID++;
     }
 
-    // do whatever regex you need to parse validity
-    // hint: return a boolean for validation when testing. For example:
-    bool is_valid = true; // replace with your actual validity checking
-    return is_valid;
-}
+    //Load courses into catalog
+    getline(classFile, line);
+    while(getline(classFile, line))
+    {
+        readData.clear();
+        stringstream lineStream(line);
+        while(getline(lineStream, line, ','))
+        {readData.push_back(line);}
+        string hours;
+        string minutes;
+        stringstream startStream(readData[2]);
+        getline(startStream, hours, ':');
+        getline(startStream, minutes, ':');
+        int tempStart = stoi(hours) * 60 + stoi(minutes);
+        stringstream endStream(readData[3]);
+        getline(endStream, hours, ':');
+        getline(endStream, minutes, ':');
+        int tempEnd = stoi(hours) * 60 + stoi(minutes);
+        catalog[readData[0]] = Course(readData[0], stoi(readData[1]), tempStart, tempEnd);   
+    }
 
-//Getters
-vector<vector<pair<int, Edge>>> CampusCompass::GetAdjacencyList(){return adjacencyList;}
-vector<pair<int, Edge>> CampusCompass::GetEdgeList(){return edgeList;}
-vector<Student> CampusCompass::GetStudents(){return students;}
-vector<Course> CampusCompass::GetCatalog(){return catalog;}
-
-//Modifiers
-bool CampusCompass::addNewStudent(string studentName, int studentID, int residenceID, vector<string> courseCodes)
-{
-    for(auto it = students.begin(); it != students.end();it++){if(it->GetUFID() == studentID){return false;}}
-    students.push_back(Student(studentName, studentID, residenceID, courseCodes));
-    for(auto i : catalog){for(auto j : courseCodes){if(i.GetClassCode() == j){i.addToRoster(studentID);}}}
     return true;
 }
 
-bool CampusCompass::removeStudent(int studentID)
-{
-    for(auto it = students.begin(); it != students.end();)
+bool CampusCompass::ParseCommand(const string &command) { 
+    vector<string> commandParams = splitCommand(command);
+    if(!commandsPossible.count(commandParams[0])){cout << "unsuccessful" << endl;return false;}
+    int commandNum = commandsPossible[commandParams[0]];
+    switch (commandNum)
     {
-        if(it->GetUFID() == studentID)
+        case 0:
         {
-            vector<string> courses = it->GetCourseSchedule();
-            students.erase(it);
-            for(auto i : catalog){for(auto j : courses){if(i.GetClassCode() == j){i.removeFromRoster(studentID);}}}
+//#insert STUDENT_NAME STUDENT_ID RESIDENCE_LOCATION_ID N CLASSCODE_1 CLASSCODE_2 ... CLASSCODE_N
+            
+            //ensure courses to add between 1-6.
+            if(commandParams.size() < 6 || commandParams.size() > 11){cout << "unsuccessful" << endl;return false;;}
+            //validate details
+            if(!validateName(commandParams[1]) || !validateUFID(commandParams[2]) || !validateResidenceID(commandParams[3]) || students.count(stoi(commandParams[2])) > 0){cout << "unsuccessful" << endl;return false;}
+            int paramNum = commandParams.size() - 5;
+            //validate course count and courses passed are correct
+            if(stoi(commandParams[4]) != paramNum){cout << "unsuccessful" << endl;return false;};
+            //create student record
+            vector<string> courseSchedule;
+            for(unsigned int i = 5; i < commandParams.size(); i++){courseSchedule.push_back(commandParams[i]);}
+            //fail if course doesnt exist
+            bool allCoursesExist = true;
+            set<string> duplicatesCheck;
+            for(auto i : courseSchedule)
+            {
+                duplicatesCheck.insert(i);
+                if(catalog.count(i) == 0)
+                {
+                    cout << "unsuccessful" << endl;
+                    allCoursesExist = false;
+                    break;
+                }
+            }
+            if(!allCoursesExist){return false;}
+            if(duplicatesCheck.size() != (commandParams.size() - 5)){cout << "unsuccessful" << endl; return false;}
+            //create student record and add them to appropriate rosters
+            students[stoi(commandParams[2])] = Student(commandParams[1], stoi(commandParams[2]), stoi(commandParams[3]), courseSchedule);
+            for(auto i : courseSchedule){catalog[i].addToRoster(stoi(commandParams[2]));}
+            cout << "successful" << endl;
             return true;
         }
-        else{it++;}
+
+        case 1:
+        {
+//#remove STUDENT_ID
+
+            if(commandParams.size() != 2 || !validateUFID(commandParams[1])){cout << "unsuccessful" << endl;return false;}
+            if(!removeStudent(stoi(commandParams[1]))){cout << "unsuccessful" << endl; return false;}
+            cout << "successful" << endl;
+            return true;
+        }
+
+        case 2:
+//#dropClass STUDENT_ID CLASSCODE
+        {
+            if(commandParams.size() != 3 || !validateUFID(commandParams[1])){cout << "unsuccessful" << endl; return false;}
+            if(!dropStudent(stoi(commandParams[1]), commandParams[2])){cout << "unsuccessful" << endl; return false;}
+            cout << "successful" << endl;
+            return true;
+        }
+
+        case 3:
+//#replaceClass STUDENT_ID CLASSCODE_A CLASSCODE_B ;
+        {
+            if(commandParams.size() != 4 || !validateUFID(commandParams[1])){cout << "unsuccessful" << endl;return false;}
+            if(!swapStudent(stoi(commandParams[1]), commandParams[2], commandParams[3])){cout << "unsuccessful" << endl; return false;}
+            cout << "successful" << endl;
+            return true;
+        }
+
+        case 4:
+//#removeClass CLASSCODE
+        {
+            if(commandParams.size() != 2 || catalog.count(commandParams[1]) == 0){cout << "unsuccessful" << endl; return false;}
+            vector<int> studentRoster = catalog[commandParams[1]].GetRoster();
+            if(studentRoster.empty()){cout << "unsuccessful" << endl; return false;}
+            catalog.erase(commandParams[1]);
+            for(auto id : studentRoster){
+                students[id].removeCourse(commandParams[1]);
+                if(students[id].GetCourseSchedule().empty()){students.erase(id);}
+            }
+            cout << studentRoster.size() << endl;
+            return true;
+        }
+
+        case 5:
+//#toggleEdgesClosure N LOCATION_ID_A LOCATION_ID_B ... LOCATION_ID_X LOCATION_ID_Y
+            return true;
+            
+        case 6:
+//#checkEdgeStatus LOCATION_ID_A LOCATION_ID_B ; 
+            return true;
+            
+        case 7:
+//#isConnected LOCATION_ID_A LOCATION_ID_B ;
+            return true;
+            
+        case 8:
+//#printShortestEdges STUDENT_ID ;
+            return true;
+            
+        case 9:
+//#printStudentZone STUDENT_ID ;
+            return true;
+            
+        case 10:
+//#verifySchedule ID ; 
+            return true;
     }
     return false;
 }
 
+//Getters
+map<int, vector<int>> CampusCompass::GetAdjacencyList(){return adjacencyList;}
+vector<Edge> CampusCompass::GetEdgeList(){return edgeList;}
+map<int, Student> CampusCompass::GetStudents(){return students;}
+map<string, Course> CampusCompass::GetCatalog(){return catalog;}
+
+//Modifiers
+
+bool CampusCompass::removeStudent(int studentID)
+{
+    if(students.count(studentID) == 0){return false;}
+    vector<string> courses = students[studentID].GetCourseSchedule();
+    students.erase(studentID);
+    for(auto i : courses){catalog[i].removeFromRoster(studentID);}
+    return true;
+}
+
 bool CampusCompass::dropStudent(int studentID, string courseCode)
 {
-    bool success = false;
-    for(auto it = students.begin(); it != students.end();it++)
-    {
-        if(it->GetUFID() == studentID)
-        {success = it->removeCourse(courseCode);}
-        if(!success){return success;}
-    }
-    for(auto it = catalog.begin(); it != catalog.end();it++)
-    {
-        if(it->GetClassCode() == courseCode)
-        {success = it->removeFromRoster(studentID);}
-        if(!success){return success;}
-    }
-    return success;
+    if(students.count(studentID) == 0){return false;}
+    if(catalog.count(courseCode) == 0){return false;}
+    if(!students[studentID].isEnrolledIn(courseCode)){return false;}
+    return(students[studentID].removeCourse(courseCode) && catalog[courseCode].removeFromRoster(studentID));
 }
 
 bool CampusCompass::swapStudent(int studentID, string courseCodeA, string courseCodeB)
 {
-    bool success = false;
-    success = dropStudent(studentID, courseCodeA);
-    for(auto it = students.begin(); it != students.end();it++)
-    {
-        if(it->GetUFID() == studentID)
-        {success = it->addCourse(courseCodeB);}
-        if(!success){return success;}
-    }
-    for(auto it = catalog.begin(); it != catalog.end();it++)
-    {
-        if(it->GetClassCode() == courseCodeB)
-        {success = it->addToRoster(studentID);}
-        if(!success){return success;}
-    }
-    return success;
-}
-
-bool CampusCompass::removeFromCatalog(string courseCode)
-{
-    bool success = false;
-    for(auto it = catalog.begin(); it != catalog.end();)
-    {
-        if(it->GetClassCode() == courseCode)
-        {
-            vector<int> enrolled = it->GetRoster();
-            for(auto j : enrolled)
-            {
-                success = it->removeFromRoster(j);
-                for(auto k : students)
-                {
-                    if(k.GetUFID() == j)
-                    {
-                        success = k.removeCourse(courseCode);
-                    }
-                }
-            }
-            catalog.erase(it);
-            return success;
-        }
-        else{it++;}
-    }
-    return success;
+    if(students.count(studentID) == 0){return false;}
+    if(catalog.count(courseCodeA) == 0 || catalog.count(courseCodeB) == 0){return false;}
+    if(!students[studentID].isEnrolledIn(courseCodeA)){return false;}
+    if(students[studentID].isEnrolledIn(courseCodeB)){return false;}
+    if(!catalog[courseCodeA].isEnrolledIn(studentID)){return false;}
+    if(catalog[courseCodeB].isEnrolledIn(studentID)){return false;}
+    return(students[studentID].removeCourse(courseCodeA) &&
+     catalog[courseCodeA].removeFromRoster(studentID) &&
+      students[studentID].addCourse(courseCodeB) &&
+       catalog[courseCodeB].addToRoster(studentID));
 }
 
 bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
-{}
+{return true;}
 //Reporting
 bool CampusCompass::checkEdge(pair<int, int> LocationIDs)
-{}
+{return true;}
 bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
-{}
+{return true;}
 vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
-{}
+{return {};}
 int CampusCompass::dispalyStudentZone(int studentID)
-{}
+{return 0;}
 int CampusCompass::verifySchedule(int studentID)
-{}
+{return 0;}
 
+//Helpers
+// STUDENT_NAME only upper and lower alpha characters
+bool CampusCompass::validateName(string param) {
+    static const regex namePattern(R"(^[A-Za-z]+( [A-Za-z]+)*$)");
+    return regex_match(param, namePattern);
+}
+
+// STUDENT_ID exactly 8 digits.
+bool CampusCompass::validateUFID(string param) {
+    static const regex ufidPattern(R"(^\d{8}$)");
+    return regex_match(param, ufidPattern);
+}
+
+// RESIDENCE_LOCATION_ID must exist in the set.
+bool CampusCompass::validateResidenceID(string param) {
+    static const regex intPattern(R"(^\d+$)");
+    if (!regex_match(param, intPattern)) return false;
+    return validResidences.count(stoi(param)) > 0;
+}
+
+//parse each command and extract name properly
+vector<string> CampusCompass::splitCommand(string line) {
+    vector<string> tokens;
+    string current;
+    bool inQuotes = false;
+    for (char c : line) 
+    {
+        if (c == '"') 
+        {
+            inQuotes = !inQuotes;
+            continue;
+        }
+        if (c == ' ' && !inQuotes) 
+        {
+            if (!current.empty()) 
+            {
+                tokens.push_back(current);
+                current.clear();
+            }
+            continue;
+        }
+        current += c;
+    }
+    if (!current.empty()) {
+        tokens.push_back(current);
+    }
+    return tokens;
+}
 /*
     ONLY LOCATION DATA NEEDS TO BE REPRESENTED AS A GRAPH
 

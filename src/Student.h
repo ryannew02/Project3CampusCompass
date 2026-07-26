@@ -13,6 +13,7 @@ private:
     
 public:
 //Constructor
+    Student() : name(""), UFID(-1), residenceID(-1) {}
     Student(string studentName, int studentID, int resID, vector<string> courseCodes);
 //Getters
     string GetName();
@@ -27,4 +28,6 @@ public:
     bool swapCourse(string oldCourseCode, string newCourseCode);
 
     bool removeStudent();
+
+    bool isEnrolledIn(string courseCode);
 };

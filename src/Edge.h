@@ -15,6 +15,7 @@ public:
 //Getters
     int GetLocID1();
     int GetLocID2();
+    int GetToLoc(int from);
     int GetWeight();
     bool GetOpenStatus();
 

@@ -55,3 +55,16 @@ using namespace std;
         roster.clear();
         return true;
     }
+
+    bool Course::isEnrolledIn(int studentID)
+    {
+        for(auto it = roster.begin(); it != roster.end();)
+        {
+            if(*it == studentID)
+            {
+                return true;
+            }
+            else{it++;}
+        }
+        return false;
+    }
