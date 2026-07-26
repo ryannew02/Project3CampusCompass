@@ -179,7 +179,7 @@ bool CampusCompass::ParseCommand(const string &command) {
             if(commandParams.size() != 3){cout << "unsuccessful" << endl; return false;}
             return checkRoute(make_pair(stoi(commandParams[1]), stoi(commandParams[2])));
         }   
-        
+
         case 8:
 //#printShortestEdges STUDENT_ID ;
             return true;
@@ -268,8 +268,8 @@ bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
     int start = LocationIDs.first;
     int target = LocationIDs.second;
 
-    if(adjacencyList.count(start) == 0 || adjacencyList.count(target) == 0){return false;}
-    if(start == target){return true;}
+    if(adjacencyList.count(start) == 0 || adjacencyList.count(target) == 0){cout << "unsuccessful" << endl; return false;}
+    if(start == target){cout << "successful" << endl; return true;}
     set<int> visited;
     queue<int> toVisit;
     toVisit.push(start);
@@ -282,7 +282,7 @@ bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
         {
             if(!edgeList[edgeID].GetOpenStatus()){continue;}
             int neighbor = edgeList[edgeID].GetToLoc(current);
-            if(neighbor == target){return true;}
+            if(neighbor == target){cout << "successful" << endl; return true;}
             if(visited.count(neighbor) == 0)
             {
                 visited.insert(neighbor);
@@ -290,6 +290,7 @@ bool CampusCompass::checkRoute(pair<int, int> LocationIDs)
             }
         }
     }
+    cout << "unsuccessful" << endl;
     return false;
 }
 

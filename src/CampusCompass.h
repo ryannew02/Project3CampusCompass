@@ -7,7 +7,7 @@
 #include <map>
 #include <set>
 #include <stack>
-#include <quene>
+#include <queue>
 #include <regex>
 #include <Student.h>
 #include <Course.h>
