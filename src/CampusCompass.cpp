@@ -200,6 +200,7 @@ bool CampusCompass::ParseCommand(const string &command) {
             cout << "Student Zone Cost For " << students[UFID].GetName() << ": " << dispalyStudentZone(UFID) << endl;
             return true;
         }
+        
         case 10:
 //#verifySchedule ID
         {
