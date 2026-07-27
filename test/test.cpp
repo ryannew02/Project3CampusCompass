@@ -96,9 +96,32 @@ TEST_CASE("Testing Incorrect removeClass Commands", "[ParseCommand][removeClass]
     }
 }
 
+TEST_CASE("printShortestEdges", "[printShortestEdges][graph]")
+{
+    CampusCompass testGraph = ParsedBase();
+
+    REQUIRE(testGraph.ParseCommand("insert \"Ryan Juergens\" 11112222 20 1 COP3502"));
+
+    std::stringstream buffer;
+    std::streambuf* oldCout = std::cout.rdbuf(buffer.rdbuf());
+
+    testGraph.ParseCommand("printShortestEdges 11112222");
+    std::string before = buffer.str();
+
+    buffer.str("");
+    testGraph.ParseCommand("toggleEdgesClosure 1 8 20");
+    testGraph.ParseCommand("printShortestEdges 11112222");
+    std::string after = buffer.str();
+
+    std::cout.rdbuf(oldCout);
+
+    REQUIRE(before.find("COP3502: -1") == std::string::npos);
+    REQUIRE(after.find("COP3502: -1") != std::string::npos);
+}
+
 //==========Need to add more ParseCommand incorrect commands====================
 
-//==========Need to add tersting for printShortestEdges command in a case where a student can reach a class, then one or more edges turn off, and then they cannot reach that class. (Hint: the visualizer tool can help with this a lot). [2 points] ==============
+//==========Need to add more testing for printShortestEdges command in a case where a student can reach a class, then one or more edges turn off, and then they cannot reach that class. (Hint: the visualizer tool can help with this a lot). [2 points] ==============
 
 
 
