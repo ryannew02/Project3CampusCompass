@@ -169,7 +169,7 @@ bool CampusCompass::ParseCommand(const string &command) {
         case 6:
 //#checkEdgeStatus LOCATION_ID_A LOCATION_ID_B ; 
         {
-            if(commandParams.size() != 3 || !isNumber(commandParams[1]) || !isNumber(commandParams[2])) ||){cout << "unsuccessful" << endl; return false;}
+            if(commandParams.size() != 3 || !isNumber(commandParams[1]) || !isNumber(commandParams[2])){cout << "unsuccessful" << endl; return false;}
             return checkEdge(make_pair(stoi(commandParams[1]), stoi(commandParams[2])));
         }            
             
