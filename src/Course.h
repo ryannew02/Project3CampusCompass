@@ -23,6 +23,7 @@ public:
     int GetLocID();
     int GetTimeBuffer(Course& rhs);
     vector<int> GetRoster();
+    int GetStartTime();
 //Methods
     bool removeFromRoster(int studentID);
     bool addToRoster(int studentID);

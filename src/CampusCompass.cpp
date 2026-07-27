@@ -193,13 +193,22 @@ bool CampusCompass::ParseCommand(const string &command) {
         }
 
         case 9:
-//#printStudentZone STUDENT_ID ;
+//#printStudentZone STUDENT_ID
+        {
+            if(commandParams.size() != 2 || !validateUFID(commandParams[1]) || students.count(stoi(commandParams[1])) == 0){cout << "unsuccessful" << endl; return false;}
+            int UFID = stoi(commandParams[1]);
+            cout << "Student Zone Cost For " << students[UFID].GetName() << ": " << dispalyStudentZone(UFID) << endl;
             return true;
-            
+        }
         case 10:
-//#verifySchedule ID ; 
+//#verifySchedule ID
+        {
+            if(commandParams.size() != 2 || !validateUFID(commandParams[1]) || students.count(stoi(commandParams[1])) == 0){cout << "unsuccessful" << endl; return false;}
+            verifySchedule(stoi(commandParams[1]));
             return true;
+        }
     }
+    cout << "unsuccessful" << endl;
     return false;
 }
 
@@ -225,7 +234,9 @@ bool CampusCompass::dropStudent(int studentID, string courseCode)
     if(students.count(studentID) == 0){return false;}
     if(catalog.count(courseCode) == 0){return false;}
     if(!students[studentID].isEnrolledIn(courseCode)){return false;}
-    return(students[studentID].removeCourse(courseCode) && catalog[courseCode].removeFromRoster(studentID));
+    bool success = students[studentID].removeCourse(courseCode) && catalog[courseCode].removeFromRoster(studentID);
+    students[studentID].GetCourseSchedule().size() == 0 ? students.erase(studentID) : success;
+    return success;
 }
 
 bool CampusCompass::swapStudent(int studentID, string courseCodeA, string courseCodeB)
@@ -250,6 +261,7 @@ bool CampusCompass::closeEdges(vector<pair<int, int>> LocationIDs)
         vector<int> otherPossibleEdges = adjacencyList[edge.second];
         for(auto i : possibleEdges){for(auto j : otherPossibleEdges){if(i == j){edgeList[i].toggleOpenStatus();break;}}}
     }
+    cout << "successful" << endl;
     return true;
 }
 //Reporting
@@ -264,8 +276,8 @@ bool CampusCompass::checkEdge(pair<int, int> LocationIDs)
     vector<int> otherPossibleEdges = adjacencyList[LocationIDs.second];
     for(auto i : possibleEdges){for(auto j : otherPossibleEdges){if(i == j)
         {
-        if(edgeList[i].GetOpenStatus()){cout << "Open" << endl; return true;}
-        else{cout << "Closed" << endl; return false;}
+        if(edgeList[i].GetOpenStatus()){cout << "open" << endl; return true;}
+        else{cout << "closed" << endl; return false;}
         }}}
     cout << "DNE" << endl;
     return false;
@@ -308,22 +320,114 @@ vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
     if(students.count(studentID) == 0){return results;}
 
     Student& student = students[studentID];
-    map<int, int> distances = findDijkstraTable(student.GetResidenceID());
+    map<int, pair<int, int>> distances = findDijkstraTable(student.GetResidenceID());
 
     for(auto& courseCode : student.GetCourseSchedule())
     {
         if(catalog.count(courseCode) == 0){continue;}
         int loc = catalog[courseCode].GetLocID();
-        int dist = distances.count(loc) ? distances[loc] : -1;
+        int dist = distances.count(loc) ? distances[loc].first : -1;
         results.push_back({courseCode, dist});
     }
     sort(results.begin(), results.end()); 
     return results;
 }
+
 int CampusCompass::dispalyStudentZone(int studentID)
-{return 0;}
+{
+    if(students.count(studentID) == 0){return -1;}
+    Student& student = students[studentID];
+    int source = student.GetResidenceID();
+
+    map<int, pair<int,int>> dTable = findDijkstraTable(source);
+
+    set<int> nodeSet;
+    nodeSet.insert(source);
+    for(auto& courseCode : student.GetCourseSchedule())
+    {
+        if(catalog.count(courseCode) == 0){continue;}
+        int target = catalog[courseCode].GetLocID();
+        if(dTable.count(target) == 0){continue;}
+        int cur = target;
+        while(cur != source)
+        {
+            nodeSet.insert(cur);
+            int predEdge = dTable[cur].second;
+            cur = edgeList[predEdge].GetToLoc(cur);
+        }
+    }
+
+    vector<int> candidateEdges;
+    set<int> seenEdgeIDs;
+    for(int node : nodeSet)
+    {
+        if(adjacencyList.count(node) == 0){continue;}
+        for(int edgeID : adjacencyList[node])
+        {
+            if(!edgeList[edgeID].GetOpenStatus()){continue;}
+            if(seenEdgeIDs.count(edgeID)){continue;}
+            int other = edgeList[edgeID].GetToLoc(node);
+            if(nodeSet.count(other))
+            {
+                candidateEdges.push_back(edgeID);
+                seenEdgeIDs.insert(edgeID);
+            }
+        }
+    }
+
+    sort(candidateEdges.begin(), candidateEdges.end(), [this](int a, int b){
+        return edgeList[a].GetWeight() < edgeList[b].GetWeight();
+    });
+
+    map<int,int> parent;
+    for(int node : nodeSet){parent[node] = node;}
+
+    int totalCost = 0;
+    for(int edgeID : candidateEdges)
+    {
+        int u = edgeList[edgeID].GetLocID1();
+        int v = edgeList[edgeID].GetLocID2();
+        int rootU = find(parent, u);
+        int rootV = find(parent, v);
+        if(rootU != rootV)
+        {
+            parent[rootU] = rootV;
+            totalCost += edgeList[edgeID].GetWeight();
+        }
+    }
+    return totalCost;
+}
+
 int CampusCompass::verifySchedule(int studentID)
-{return 0;}
+{
+    Student& student = students[studentID];
+    vector<string> schedule = student.GetCourseSchedule();
+
+    cout << "Schedule Check for " << student.GetName() << ":" << endl;
+
+    if(schedule.size() <= 1){cout << "unsuccessful" << endl; return 0;}
+
+    sort(schedule.begin(), schedule.end(), [this](const string& a, const string& b){
+        return catalog[a].GetStartTime() < catalog[b].GetStartTime();
+    });
+
+    for(size_t i = 0; i + 1 < schedule.size(); i++)
+    {
+        string codeA = schedule[i];
+        string codeB = schedule[i+1];
+
+        int buffer = catalog[codeA].GetTimeBuffer(catalog[codeB]); // B.start - A.end
+        int locA = catalog[codeA].GetLocID();
+        int locB = catalog[codeB].GetLocID();
+
+        map<int, pair<int,int>> dTable = findDijkstraTable(locA);
+        bool reachable = dTable.count(locB) > 0;
+        bool ok = reachable && dTable[locB].first <= buffer;
+
+        cout << codeA << " - " << codeB << ": " << (ok ? "successful" : "unsuccessful") << endl;
+    }
+    return 0;
+}
 
 //Helpers
 // STUDENT_NAME only upper and lower alpha characters
@@ -374,30 +478,38 @@ vector<string> CampusCompass::splitCommand(string line) {
     return tokens;
 }
 
-map<int, int> CampusCompass::findDijkstraTable(int source)
+map<int, pair<int, int>> CampusCompass::findDijkstraTable(int source)
 {
-    map<int, int> distances;
+    map<int, pair<int, int>> distances;
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> prioQuene;
-    distances[source] = 0;
+    distances[source] = make_pair(0, -1);
     prioQuene.push(make_pair(0, source));
     while(!prioQuene.empty())
     {
         int x = prioQuene.top().first;
         int y = prioQuene.top().second;
         prioQuene.pop();
-        if(x > distances[y]){continue;}
+        if(x > distances[y].first){continue;}
         for(int edgeID : adjacencyList[y])
         {
             if(!edgeList[edgeID].GetOpenStatus()){continue;}
             int z = edgeList[edgeID].GetToLoc(y);
             int newDist = x + edgeList[edgeID].GetWeight();
-            if(distances.count(z) == 0 || newDist < distances[z])
+            if(distances.count(z) == 0 || newDist < distances[z].first)
             {
-                distances[z] = newDist;
+                distances[z].first = newDist;
+                distances[z].second = edgeID;
                 prioQuene.push({newDist, z});
             }
         }
     }
+    return distances;
+}
+
+int CampusCompass::find(map<int,int>& parent, int x)
+{
+    if(parent[x] != x){parent[x] = find(parent, parent[x]);}
+    return parent[x];
 }
 
 /*

@@ -14,6 +14,7 @@ using namespace std;
     int Course::GetLocID(){return LocID;}
     int Course::GetTimeBuffer(Course& rhs){return (rhs.startTime - this->endTime);}
     vector<int> Course::GetRoster(){return roster;}
+    int Course::GetStartTime(){return startTime;}
 //Methods
     bool Course::removeFromRoster(int studentID)
     {
