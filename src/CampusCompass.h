@@ -59,7 +59,7 @@ public:
     bool validateResidenceID(string residenceID);
     vector<string> splitCommand(string line);
     map<int, pair<int, int>> findDijkstraTable(int source);
-    int find(map<int,int>& parent, int x);
+    int cycleDetectionHelper(map<int,int>& parent, int x);
     bool isNumber(string param);
 
 
