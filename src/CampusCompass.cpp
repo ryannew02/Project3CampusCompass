@@ -170,7 +170,7 @@ bool CampusCompass::ParseCommand(const string &command) {
 //#checkEdgeStatus LOCATION_ID_A LOCATION_ID_B ; 
         {
             if(commandParams.size() != 3 || !isNumber(commandParams[1]) || !isNumber(commandParams[2])){cout << "unsuccessful" << endl; return false;} //TIME: O(1)
-            return checkEdge(make_pair(stoi(commandParams[1]), stoi(commandParams[2]))); //TIME: O(log(h) + g^2) -- see checkEdge() below
+            return checkEdge(make_pair(stoi(commandParams[1]), stoi(commandParams[2]))); //TIME: O(log(h) + g^2)
         } //TOTAL TIME: O(log(h) + g^2)
             
         case 7:
@@ -186,7 +186,7 @@ bool CampusCompass::ParseCommand(const string &command) {
             if(commandParams.size() != 2 || !validateUFID(commandParams[1]) || students.count(stoi(commandParams[1])) == 0){cout << "unsuccessful" << endl; return false;} //TIME: O(log(d))
             int UFID = stoi(commandParams[1]); //TIME: O(1)
             cout << "Time For Shortest Edges: " << students[UFID].GetName() << endl; //TIME: O(log(d))
-            for(auto& route : displayAvailableRoutes(UFID)){ //TIME: O(log(d) + log(e) + m*log(h) + m*log(m)) -- see displayAvailableRoutes() below; loop itself bounded by k<=6
+            for(auto& route : displayAvailableRoutes(UFID)){ //TIME: O(log(d) + log(e) + m*log(h) + m*log(m))
                 cout << route.first << ": " << route.second << endl;
             }
             return true;
@@ -197,7 +197,7 @@ bool CampusCompass::ParseCommand(const string &command) {
         {
             if(commandParams.size() != 2 || !validateUFID(commandParams[1]) || students.count(stoi(commandParams[1])) == 0){cout << "unsuccessful" << endl; return false;} //TIME: O(log(d))
             int UFID = stoi(commandParams[1]); //TIME: O(1)
-            cout << "Student Zone Cost For " << students[UFID].GetName() << ": " << dispalyStudentZone(UFID) << endl; //TIME: O(log(d) + h*log(h) + m*log(h) + m*log(m)) -- see dispalyStudentZone() below
+            cout << "Student Zone Cost For " << students[UFID].GetName() << ": " << dispalyStudentZone(UFID) << endl; //TIME: O(log(d) + h*log(h) + m*log(h) + m*log(m))
             return true;
         } //TOTAL TIME: O(log(d) + h*log(h) + m*log(h) + m*log(m))
         
@@ -321,9 +321,9 @@ vector<pair<string, int>> CampusCompass::displayAvailableRoutes(int studentID)
     if(students.count(studentID) == 0){return results;} //TIME: O(log(d))
 
     Student& student = students[studentID]; //TIME: O(log(d))
-    map<int, pair<int, int>> distances = findDijkstraTable(student.GetResidenceID()); //TIME: O(m*log(h) + m*log(m)) -- see findDijkstraTable() below
+    map<int, pair<int, int>> distances = findDijkstraTable(student.GetResidenceID()); //TIME: O(m*log(h) + m*log(m))
 
-    for(auto& courseCode : student.GetCourseSchedule()) //TIME: O(log(e) + log(h)) -- bounded loop (k<=6), dominated by per-iteration map lookups
+    for(auto& courseCode : student.GetCourseSchedule()) //TIME: O(log(e) + log(h))
     {
         if(catalog.count(courseCode) == 0){continue;}
         int loc = catalog[courseCode].GetLocID();
